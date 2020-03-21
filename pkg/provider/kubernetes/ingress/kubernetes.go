@@ -199,8 +199,15 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 		}
 
 		err = getCertificates(ctx, ingress, client, certConfigs)
+                hasCerts := false
 		if err != nil {
 			log.FromContext(ctx).Errorf("Error configuring TLS: %v", err)
+			 for _, t := range ingress.Spec.TLS {
+ 		           if t.SecretName != "" {
+			      hasCerts = true
+                              break
+			   }
+			 }
 		}
 
 		if len(ingress.Spec.Rules) == 0 && ingress.Spec.Backend != nil {
@@ -277,6 +284,11 @@ func (p *Provider) loadConfigurationFromIngresses(ctx context.Context, client Cl
 	if len(certs) > 0 {
 		conf.TLS = &dynamic.TLSConfiguration{
 			Certificates: certs,
+		}
+	} else {
+		if (hasCerts) {
+			conf.TLS = &dynamic.TLSConfiguration{
+			}
 		}
 	}
 
